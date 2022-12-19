@@ -9,7 +9,6 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from gnews import GNews
 from newspaper import Article
-import pandas as pd
 import datetime
 import requests
 from bs4 import BeautifulSoup
@@ -43,22 +42,6 @@ def news(selected_stock):
   heading_elements = soup.find_all('div', class_='mCBkyc ynAwRc MBeuO nDgy9d')
 
   link_elements = soup.find_all('a', class_='WlydOe')
-    
-  # df_news = pd.DataFrame()
-
-  # Loop through each heading element and print the text
-  # for heading_element in heading_elements:
-  #   heading = heading_element.get_text()
-
-  #   # create a temporary DataFrame with one column and one row
-  #   temp_df_news = pd.DataFrame({'title': [heading]})
-  
-  #   # append the temporary DataFrame to the original DataFrame
-  #   df_news = df_news.append(temp_df_news, ignore_index=True)
-
-
-  # Create an empty list to store the links
-  # links = []
 
   # Loop through each link element and store the link
 
@@ -69,279 +52,96 @@ def news(selected_stock):
     st.markdown(f'<p class="big-font">{headline}</p>', unsafe_allow_html=True)
     st.markdown(link, unsafe_allow_html=True)
     st.markdown("""<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """, unsafe_allow_html=True)
-    # links.append(link)
 
-  # Create a dataframe from the links
-  # df_links = pd.DataFrame(links, columns=['Link'])
-  # df_news = pd.concat([df_news, df_links], axis=1)
-  #st.write(df_news.head(5))
-  # x = df_news.title
-  # st.metric(label="x", value=123, delta=123, delta_color="off")
-
-  # return df_news
-
-# def headline(selected_stock):
-#   google_news = GNews(country='Indonesia')
-#   if selected_stock == 'BBRI':
-#     news = google_news.get_news('BRI saham')
-#     #values=["bank mandiri","BBRI"]
-#   elif selected_stock == 'BBCA':
-#     news = google_news.get_news('BBCA saham')
-#     #values=["bank mandiri","BBCA"]
-#   elif selected_stock == 'BBNI':
-#     news = google_news.get_news('BNI')
-#     #values=["bank mandiri","BNI"]
-#   elif selected_stock == 'BBTN':
-#     news = google_news.get_news('BTN saham')
-#     #values=["bank mandiri","BTN"]
-#   else:
-#     news = google_news.get_news('BMRI saham')
-#     # values=["bank mandiri","BMRI"]
-#   df = pd.DataFrame(news)
-#   df['published date'] = pd.to_datetime(df['published date'])
-#   df.sort_values(by='published date', ascending=False, inplace=True)
-#   #df = df.loc[df['title'].isin(values)]
-#   #df = df[df['title'].str.contains(selected_stock, regex=False)]
-#   df.reset_index(drop=True, inplace=True)
-#   df.head(10)
-#   st.write(df.head(5))
-#   return df
-
-START = "2015-01-01"
-TODAY = date.today().strftime("%Y-%m-%d")
-# Load the Model
+# Load the models and scalers
 scaler_bca = pickle.load(open('scaler_bca.pkl','rb'))
 model_bca = tf.keras.models.load_model('model_bca.h5')
-
 scaler_bmri = pickle.load(open('scaler_bmri.pkl','rb'))
 model_bmri = tf.keras.models.load_model('model_bmri.h5')
-
 scaler_bni = pickle.load(open('scaler_bni.pkl','rb'))
 model_bni = tf.keras.models.load_model('model_bni.h5')
-
 scaler_bri = pickle.load(open('scaler_bri.pkl','rb'))
 model_bri = tf.keras.models.load_model('model_bri.h5')
-
 scaler_btn = pickle.load(open('scaler_btn.pkl','rb'))
 model_btn = tf.keras.models.load_model('model_btn.h5')
 
+# Dictionary to map stock names to ticker symbols and models/scalers
+stock_data = {
+    'BBCA': {'ticker': 'BBCA.JK', 'model': model_bca, 'scaler': scaler_bca},
+    'BMRI': {'ticker': 'BMRI.JK', 'model': model_bmri, 'scaler': scaler_bmri},
+    'BBNI': {'ticker': 'BBNI.JK', 'model': model_bni, 'scaler': scaler_bni},
+    'BBRI': {'ticker': 'BBRI.JK', 'model': model_bri, 'scaler': scaler_bri},
+    'BBTN': {'ticker': 'BBTN.JK', 'model': model_btn, 'scaler': scaler_btn},
+}
+
+# Set the start and end dates for the historical data
+START = "2015-01-01"
+TODAY = date.today().strftime("%Y-%m-%d")
+
+# Set the time step for the model
+time_step = 8
+
+# Set up the web app
 st.title('Stock Forecast App')
 
+# Allow the user to select a stock and specify the number of days to predict
 stocks = ('BBCA', 'BMRI', 'BBNI', 'BBRI','BBTN')
 selected_stock = st.sidebar.selectbox('Stocks', stocks)
+n_days = st.sidebar.slider('Days of prediction:', 7, 30)
 
-n_years = st.sidebar.slider('Days of prediction:', 1, 7)
-
+# Display the historical data for the selected stock
 st.subheader('Historical Stock Report')
 st.write(selected_stock)
-# Set the ticker
-if selected_stock == 'BBCA':
-    ticker = 'BBCA.JK'
-    data = yf.download(ticker, START, TODAY)
-    data = data[["Open", "High","Low", "Close","Volume"]]
-    st.write(data.tail())
 
-    data.reset_index(inplace=True)
-    data =data.rename(columns={'Date': 'date','Open':'open','High':'high','Low':'low','Close':'close',
-                                    'Adj Close':'adj_close','Volume':'volume'})
+# Get the data for the selected stock
+data = yf.download(stock_data[selected_stock]['ticker'], START, TODAY)
+data = data[["Open", "High","Low", "Close","Volume"]]
+st.write(data.tail())
 
-    data['date'] = pd.to_datetime(data.date)
-    data = data['close']
+# Preprocess the data
+data.reset_index(inplace=True)
+data = data.rename(columns={'Date': 'date','Open':'open','High':'high','Low':'low','Close':'close',
+                            'Adj Close':'adj_close','Volume':'volume'})
+data['date'] = pd.to_datetime(data.date)
+data = data['close']
+input_data = stock_data[selected_stock]['scaler'].transform(np.array(data).reshape(-1,1))
 
-    input_data = scaler_bca.transform(np.array(data).reshape(-1,1))
+# Create the dataset for the model
+def create_dataset(dataset, time_step=1):
+    dataX, dataY = [], []
+    for i in range(len(dataset)-time_step-1):
+        a = dataset[i:(i+time_step), 0]
+        dataX.append(a)
+        dataY.append(dataset[i + time_step, 0])
+    return np.array(dataX), np.array(dataY)
 
-    def create_dataset(dataset, time_step=1):
-        dataX, dataY = [], []
-        for i in range(len(dataset)-time_step-1):
-            a = dataset[i:(i+time_step), 0]   ###i=0, 0,1,2,3-----99   100 
-            dataX.append(a)
-            dataY.append(dataset[i + time_step, 0])
-        return np.array(dataX), np.array(dataY)
+# Split the data into test and train sets
+X_test, y_test = create_dataset(input_data, time_step)
+X_test = X_test.reshape(X_test.shape[0],X_test.shape[1] , 1)
 
-    time_step = 8
-    X_test, y_test = create_dataset(input_data, time_step)
-    X_test = X_test.reshape(X_test.shape[0],X_test.shape[1] , 1)    
+# Make predictions using the model
+y_predicted = stock_data[selected_stock]['model'].predict(X_test)
 
+# Inverse transform the predictions and original data
+y_predicted = stock_data[selected_stock]['scaler'].inverse_transform(y_predicted)
+y_test = stock_data[selected_stock]['scaler'].inverse_transform(y_test.reshape(-1,1))
 
-    y_predicted = model_bca.predict(X_test)
+# Plot the predictions vs the original data
+st.subheader("Predictions vs Original")
+fig2= plt.figure(figsize = (12,6))
+plt.plot(y_test, 'b', label = 'Original Price')
+plt.plot(y_predicted, 'r', label = 'Predicted Price')
+plt.xlabel('Time')
+plt.ylabel('Price')
+plt.legend()
+st.pyplot(fig2)
 
-    y_predicted = scaler_bca.inverse_transform(y_predicted)
-    y_test = scaler_bca.inverse_transform(y_test.reshape(-1,1))
-    st.subheader("Predictions vs Original")
-    fig2= plt.figure(figsize = (12,6))
-    plt.plot(y_test, 'b', label = 'Original Price')
-    plt.plot(y_predicted, 'r', label = 'Predicted Price')
-    plt.xlabel('Time')
-    plt.ylabel('Price')
-    plt.legend()
-    st.pyplot(fig2)
-    news(selected_stock)
-
-elif selected_stock == 'BMRI':
-    ticker = 'BMRI.JK'
-    data = yf.download(ticker, START, TODAY)
-    data = data[["Open", "High","Low", "Close","Volume"]]
-    st.write(data.tail())
-
-    data.reset_index(inplace=True)
-    data =data.rename(columns={'Date': 'date','Open':'open','High':'high','Low':'low','Close':'close',
-                                    'Adj Close':'adj_close','Volume':'volume'})
-
-    data['date'] = pd.to_datetime(data.date)
-    data = data['close']
-
-    input_data = scaler_bmri.transform(np.array(data).reshape(-1,1))
-
-    def create_dataset(dataset, time_step=1):
-        dataX, dataY = [], []
-        for i in range(len(dataset)-time_step-1):
-            a = dataset[i:(i+time_step), 0]   ###i=0, 0,1,2,3-----99   100 
-            dataX.append(a)
-            dataY.append(dataset[i + time_step, 0])
-        return np.array(dataX), np.array(dataY)
-
-    time_step = 8
-    X_test, y_test = create_dataset(input_data, time_step)
-    X_test = X_test.reshape(X_test.shape[0],X_test.shape[1] , 1)    
-
-
-    y_predicted = model_bmri.predict(X_test)
-
-    y_predicted = scaler_bmri.inverse_transform(y_predicted)
-    y_test = scaler_bmri.inverse_transform(y_test.reshape(-1,1))
-    st.subheader("Predictions vs Original")
-    fig2= plt.figure(figsize = (12,6))
-    plt.plot(y_test, 'b', label = 'Original Price')
-    plt.plot(y_predicted, 'r', label = 'Predicted Price')
-    plt.xlabel('Time')
-    plt.ylabel('Price')
-    plt.legend()
-    st.pyplot(fig2)
-    news(selected_stock)
-
-elif selected_stock == 'BBNI':
-    ticker = 'BBNI.JK'
-    data = yf.download(ticker, START, TODAY)
-    data = data[["Open", "High","Low", "Close","Volume"]]
-    st.write(data.tail())
-
-    data.reset_index(inplace=True)
-    data =data.rename(columns={'Date': 'date','Open':'open','High':'high','Low':'low','Close':'close',
-                                    'Adj Close':'adj_close','Volume':'volume'})
-
-    data['date'] = pd.to_datetime(data.date)
-    data = data['close']
-
-    input_data = scaler_bni.transform(np.array(data).reshape(-1,1))
-
-    def create_dataset(dataset, time_step=1):
-        dataX, dataY = [], []
-        for i in range(len(dataset)-time_step-1):
-            a = dataset[i:(i+time_step), 0]   ###i=0, 0,1,2,3-----99   100 
-            dataX.append(a)
-            dataY.append(dataset[i + time_step, 0])
-        return np.array(dataX), np.array(dataY)
-
-    time_step = 8
-    X_test, y_test = create_dataset(input_data, time_step)
-    X_test = X_test.reshape(X_test.shape[0],X_test.shape[1] , 1)    
-
-
-    y_predicted = model_bni.predict(X_test)
-
-    y_predicted = scaler_bni.inverse_transform(y_predicted)
-    y_test = scaler_bni.inverse_transform(y_test.reshape(-1,1))
-    st.subheader("Predictions vs Original")
-    fig2= plt.figure(figsize = (12,6))
-    plt.plot(y_test, 'b', label = 'Original Price')
-    plt.plot(y_predicted, 'r', label = 'Predicted Price')
-    plt.xlabel('Time')
-    plt.ylabel('Price')
-    plt.legend()
-    st.pyplot(fig2)
-    news(selected_stock)
-
-elif selected_stock == 'BBRI':
-    ticker = 'BBRI.JK'
-    data = yf.download(ticker, START, TODAY)
-    data = data[["Open", "High","Low", "Close","Volume"]]
-    st.write(data.tail())
-
-    data.reset_index(inplace=True)
-    data =data.rename(columns={'Date': 'date','Open':'open','High':'high','Low':'low','Close':'close',
-                                    'Adj Close':'adj_close','Volume':'volume'})
-
-    data['date'] = pd.to_datetime(data.date)
-    data = data['close']
-
-    input_data = scaler_bri.transform(np.array(data).reshape(-1,1))
-
-    def create_dataset(dataset, time_step=1):
-        dataX, dataY = [], []
-        for i in range(len(dataset)-time_step-1):
-            a = dataset[i:(i+time_step), 0]   ###i=0, 0,1,2,3-----99   100 
-            dataX.append(a)
-            dataY.append(dataset[i + time_step, 0])
-        return np.array(dataX), np.array(dataY)
-
-    time_step = 8
-    X_test, y_test = create_dataset(input_data, time_step)
-    X_test = X_test.reshape(X_test.shape[0],X_test.shape[1] , 1)    
-
-
-    y_predicted = model_bri.predict(X_test)
-
-    y_predicted = scaler_bri.inverse_transform(y_predicted)
-    y_test = scaler_bri.inverse_transform(y_test.reshape(-1,1))
-    st.subheader("Predictions vs Original")
-    fig2= plt.figure(figsize = (12,6))
-    plt.plot(y_test, 'b', label = 'Original Price')
-    plt.plot(y_predicted, 'r', label = 'Predicted Price')
-    plt.xlabel('Time')
-    plt.ylabel('Price')
-    plt.legend()
-    st.pyplot(fig2)
-    news(selected_stock)
-
-elif selected_stock == 'BBTN':
-    ticker = 'BBTN.JK'
-    data = yf.download(ticker, START, TODAY)
-    data = data[["Open", "High","Low", "Close","Volume"]]
-    st.write(data.tail())
-
-    data.reset_index(inplace=True)
-    data =data.rename(columns={'Date': 'date','Open':'open','High':'high','Low':'low','Close':'close',
-                                    'Adj Close':'adj_close','Volume':'volume'})
-
-    data['date'] = pd.to_datetime(data.date)
-    data = data['close']
-
-    input_data = scaler_btn.transform(np.array(data).reshape(-1,1))
-
-    def create_dataset(dataset, time_step=1):
-        dataX, dataY = [], []
-        for i in range(len(dataset)-time_step-1):
-            a = dataset[i:(i+time_step), 0]   ###i=0, 0,1,2,3-----99   100 
-            dataX.append(a)
-            dataY.append(dataset[i + time_step, 0])
-        return np.array(dataX), np.array(dataY)
-
-    time_step = 8
-    X_test, y_test = create_dataset(input_data, time_step)
-    X_test = X_test.reshape(X_test.shape[0],X_test.shape[1] , 1)    
-
-
-    y_predicted = model_btn.predict(X_test)
-
-    y_predicted = scaler_btn.inverse_transform(y_predicted)
-    y_test = scaler_btn.inverse_transform(y_test.reshape(-1,1))
-    st.subheader("Predictions vs Original")
-    fig2= plt.figure(figsize = (12,6))
-    plt.plot(y_test, 'b', label = 'Original Price')
-    plt.plot(y_predicted, 'r', label = 'Predicted Price')
-    plt.xlabel('Time')
-    plt.ylabel('Price')
-    plt.legend()
-    st.pyplot(fig2)
-    news(selected_stock)
-
+# Display the prediction for the specified number of days
+st.subheader("Prediction for the next {} days".format(n_days))
+fig3= plt.figure(figsize = (12,6))
+plt.plot(y_predicted[-n_days:], 'r', label = 'Predicted Price')
+plt.xlabel('Time')
+plt.ylabel('Price')
+plt.legend()
+st.pyplot(fig3)
+news(selected_stock)
