@@ -14,7 +14,16 @@ import datetime
 import requests
 from bs4 import BeautifulSoup
 
+st.markdown("""
+<style>
+.big-font {
+    font-size:25px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 def news(selected_stock):
+  st.header("Headline News")
   if selected_stock == 'BBRI':
     url = "https://www.google.com/search?sxsrf=ALiCzsaW9Ve40dpjT2L2MbzLZSyj0UfoYA:1671421151309&q=bbri+saham&tbm=nws&source=univ&tbo=u&sxsrf=ALiCzsaW9Ve40dpjT2L2MbzLZSyj0UfoYA:1671421151309&sa=X&ved=2ahUKEwixqvn_4IT8AhW5TWwGHbb0B_AQt8YBKAB6BAgXEAE&biw=1536&bih=714&dpr=1.25"
   elif selected_stock == 'BBCA':
@@ -35,39 +44,41 @@ def news(selected_stock):
 
   link_elements = soup.find_all('a', class_='WlydOe')
     
-  df_news = pd.DataFrame()
+  # df_news = pd.DataFrame()
 
   # Loop through each heading element and print the text
-  for heading_element in heading_elements:
-    heading = heading_element.get_text()
+  # for heading_element in heading_elements:
+  #   heading = heading_element.get_text()
 
-    # create a temporary DataFrame with one column and one row
-    temp_df_news = pd.DataFrame({'title': [heading]})
+  #   # create a temporary DataFrame with one column and one row
+  #   temp_df_news = pd.DataFrame({'title': [heading]})
   
-    # append the temporary DataFrame to the original DataFrame
-    df_news = df_news.append(temp_df_news, ignore_index=True)
-
-
+  #   # append the temporary DataFrame to the original DataFrame
+  #   df_news = df_news.append(temp_df_news, ignore_index=True)
 
 
   # Create an empty list to store the links
-  links = []
+  # links = []
 
   # Loop through each link element and store the link
+
+
   for link_element in link_elements:
     link = link_element.get('href')
-    links.append(link)
+    headline =  link_element.get_text()
+    st.markdown(f'<p class="big-font">{headline}</p>', unsafe_allow_html=True)
+    st.markdown(link, unsafe_allow_html=True)
+    st.markdown("""<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """, unsafe_allow_html=True)
+    # links.append(link)
 
   # Create a dataframe from the links
-  df_links = pd.DataFrame(links, columns=['Link'])
-
-
-  df_news = pd.concat([df_news, df_links], axis=1)
+  # df_links = pd.DataFrame(links, columns=['Link'])
+  # df_news = pd.concat([df_news, df_links], axis=1)
   #st.write(df_news.head(5))
-  x = df_news.title
-  st.metric(label="x", value=123, delta=123, delta_color="off")
+  # x = df_news.title
+  # st.metric(label="x", value=123, delta=123, delta_color="off")
 
-  return df_news
+  # return df_news
 
 # def headline(selected_stock):
 #   google_news = GNews(country='Indonesia')
@@ -333,5 +344,4 @@ elif selected_stock == 'BBTN':
     plt.legend()
     st.pyplot(fig2)
     news(selected_stock)
-
 
