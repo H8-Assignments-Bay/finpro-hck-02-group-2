@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import date
 import yfinance as yf
 from plotly import graph_objs as go
+import plotly.express as px
 import pickle
 import tensorflow as tf
 import numpy as np
@@ -12,17 +13,12 @@ from newspaper import Article
 import datetime
 import requests
 from bs4 import BeautifulSoup
-<<<<<<< HEAD
-import gradio as gr
-import plotly.express as px
-=======
 from PIL import Image
 image1 = Image.open('bca.png')
 image2 = Image.open('mandiri.png')
 image3 = Image.open('bni.png')
 image4 = Image.open('bri.png')
 image5 = Image.open('btn.png')
->>>>>>> f4ea0233580071205067bfb74c277ed4bf58bfc9
 
 st.markdown("""
 <style>
@@ -140,50 +136,27 @@ if st.sidebar.button("Predict"):
   y_predicted = stock_data[selected_stock]['scaler'].inverse_transform(y_predicted)
   y_test = stock_data[selected_stock]['scaler'].inverse_transform(y_test.reshape(-1,1))
 
-<<<<<<< HEAD
-  # Plot the predictions vs the original data
-  st.subheader("Predictions vs Original")
-  fig2= plt.figure(figsize = (12,6))
-  plt.plot(y_test, 'b', label = 'Original Price')
-  plt.plot(y_predicted, 'r', label = 'Predicted Price')
-  plt.xlabel('Time')
-  plt.ylabel('Price')
-  plt.legend()
-  st.pyplot(fig2)
-
   # Display the prediction for the specified number of days
-  import plotly.express as px
+  st.markdown(f'<p class="big-font">Prediction for the next {n_days} days</p>', unsafe_allow_html=True)
   y_predicted = y_predicted.reshape(-1)
   times = list(range(1, n_days+1))
   df = pd.DataFrame({'Day': times, 'Price': y_predicted[-n_days:]})
-  fig = px.line(df, x='Day', y='Price', hover_name='Price', title='Prediction for the next {} days'.format(n_days))
+  fig = px.line(df, x='Day', y='Price', hover_name='Price')
+
+  #Percentage
+  L = y_predicted[-1]
+  F = y_predicted[-n_days]
+  P = round(((L-F)/F),2)
+  P = '{:.2f}'.format(P)
+  T = '{:,.2f}'.format(L)
+
+
+  #
+  st.metric(stock_data[selected_stock]['ticker'], f'IDR {T}', f'{P}%')
   st.plotly_chart(fig)
+
+  # Harga baru - harga lama / harga lama x 100%
+
 
   # Display News Based on selected stock
   news(selected_stock)
-=======
-# Display the prediction for the specified number of days
-st.markdown(f'<p class="big-font">Prediction for the next {n_days} days</p>', unsafe_allow_html=True)
-y_predicted = y_predicted.reshape(-1)
-times = list(range(1, n_days+1))
-df = pd.DataFrame({'Day': times, 'Price': y_predicted[-n_days:]})
-fig = px.line(df, x='Day', y='Price', hover_name='Price')
-
-#Percentage
-L = y_predicted[-1]
-F = y_predicted[-n_days]
-P = round(((L-F)/F),2)
-P = '{:.2f}'.format(P)
-T = '{:,.2f}'.format(L)
-
-
-#
-st.metric(stock_data[selected_stock]['ticker'], f'IDR {T}', f'{P}%')
-st.plotly_chart(fig)
-
-# Harga baru - harga lama / harga lama x 100%
-
-
-# Display News Based on selected stock
-news(selected_stock)
->>>>>>> b183229349eb4d5f2a0ebd7f0f608bcded80634e
