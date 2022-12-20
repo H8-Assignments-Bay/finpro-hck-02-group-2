@@ -51,7 +51,7 @@ def news(selected_stock):
     headline =  link_element.get_text()
     st.markdown(f'<p class="big-font">{headline}</p>', unsafe_allow_html=True)
     st.markdown(link, unsafe_allow_html=True)
-    st.markdown("""<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """, unsafe_allow_html=True)
+    st.markdown("""<hr style="height:3px;border:none;color:#FAFAFA;background-color:#FAFAFA;" /> """, unsafe_allow_html=True)
 
 # Load the models and scalers
 scaler_bca = pickle.load(open('scaler_bca.pkl','rb'))
@@ -137,11 +137,12 @@ plt.legend()
 st.pyplot(fig2)
 
 # Display the prediction for the specified number of days
-st.subheader("Prediction for the next {} days".format(n_days))
-fig3= plt.figure(figsize = (12,6))
-plt.plot(y_predicted[-n_days:], 'r', label = 'Predicted Price')
-plt.xlabel('Time')
-plt.ylabel('Price')
-plt.legend()
-st.pyplot(fig3)
+import plotly.express as px
+y_predicted = y_predicted.reshape(-1)
+times = list(range(1, n_days+1))
+df = pd.DataFrame({'Day': times, 'Price': y_predicted[-n_days:]})
+fig = px.line(df, x='Day', y='Price', hover_name='Price', title='Prediction for the next {} days'.format(n_days))
+st.plotly_chart(fig)
+
+# Display News Based on selected stock
 news(selected_stock)
