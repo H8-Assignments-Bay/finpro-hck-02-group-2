@@ -135,6 +135,7 @@ if st.sidebar.button("Predict"):
   y_predicted = stock_data[selected_stock]['scaler'].inverse_transform(y_predicted)
   y_test = stock_data[selected_stock]['scaler'].inverse_transform(y_test.reshape(-1,1))
 
+<<<<<<< HEAD
   # Plot the predictions vs the original data
   st.subheader("Predictions vs Original")
   fig2= plt.figure(figsize = (12,6))
@@ -155,3 +156,15 @@ if st.sidebar.button("Predict"):
 
   # Display News Based on selected stock
   news(selected_stock)
+=======
+# Display the prediction for the specified number of days
+import plotly.express as px
+y_predicted = y_predicted.reshape(-1)
+times = list(range(1, n_days+1))
+df = pd.DataFrame({'Day': times, 'Price': y_predicted[-n_days:]})
+fig = px.line(df, x='Day', y='Price', hover_name='Price', title='Prediction for the next {} days'.format(n_days))
+st.plotly_chart(fig)
+
+# Display News Based on selected stock
+news(selected_stock)
+>>>>>>> b183229349eb4d5f2a0ebd7f0f608bcded80634e
