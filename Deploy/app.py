@@ -12,6 +12,12 @@ from newspaper import Article
 import datetime
 import requests
 from bs4 import BeautifulSoup
+from PIL import Image
+image1 = Image.open('bca.png')
+image2 = Image.open('mandiri.png')
+image3 = Image.open('bni.png')
+image4 = Image.open('bri.png')
+image5 = Image.open('btn.png')
 
 st.markdown("""
 <style>
@@ -51,7 +57,7 @@ def news(selected_stock):
     headline =  link_element.get_text()
     st.markdown(f'<p class="big-font">{headline}</p>', unsafe_allow_html=True)
     st.markdown(link, unsafe_allow_html=True)
-    st.markdown("""<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """, unsafe_allow_html=True)
+    st.markdown("""<hr style="height:3px;border:none;color:#FAFAFA;background-color:#FAFAFA;" /> """, unsafe_allow_html=True)
 
 # Load the models and scalers
 scaler_bca = pickle.load(open('scaler_bca.pkl','rb'))
@@ -67,11 +73,11 @@ model_btn = tf.keras.models.load_model('model_btn.h5')
 
 # Dictionary to map stock names to ticker symbols and models/scalers
 stock_data = {
-    'BBCA': {'ticker': 'BBCA.JK', 'model': model_bca, 'scaler': scaler_bca},
-    'BMRI': {'ticker': 'BMRI.JK', 'model': model_bmri, 'scaler': scaler_bmri},
-    'BBNI': {'ticker': 'BBNI.JK', 'model': model_bni, 'scaler': scaler_bni},
-    'BBRI': {'ticker': 'BBRI.JK', 'model': model_bri, 'scaler': scaler_bri},
-    'BBTN': {'ticker': 'BBTN.JK', 'model': model_btn, 'scaler': scaler_btn},
+    'BBCA': {'ticker': 'BBCA.JK', 'model': model_bca, 'scaler': scaler_bca, 'logo': image1},
+    'BMRI': {'ticker': 'BMRI.JK', 'model': model_bmri, 'scaler': scaler_bmri, 'logo': image2},
+    'BBNI': {'ticker': 'BBNI.JK', 'model': model_bni, 'scaler': scaler_bni,'logo': image3},
+    'BBRI': {'ticker': 'BBRI.JK', 'model': model_bri, 'scaler': scaler_bri,'logo': image4},
+    'BBTN': {'ticker': 'BBTN.JK', 'model': model_btn, 'scaler': scaler_btn,'logo': image5},
 }
 
 # Set the start and end dates for the historical data
@@ -90,58 +96,62 @@ selected_stock = st.sidebar.selectbox('Stocks', stocks)
 n_days = st.sidebar.slider('Days of prediction:', 7, 30)
 
 # Display the historical data for the selected stock
-st.subheader('Historical Stock Report')
-st.write(selected_stock)
 
+st.subheader('Historical Stock Report')
+st.image(stock_data[selected_stock]['logo'],width=100)
 # Get the data for the selected stock
+
 data = yf.download(stock_data[selected_stock]['ticker'], START, TODAY)
 data = data[["Open", "High","Low", "Close","Volume"]]
 st.write(data.tail())
 
-# Preprocess the data
-data.reset_index(inplace=True)
-data = data.rename(columns={'Date': 'date','Open':'open','High':'high','Low':'low','Close':'close',
-                            'Adj Close':'adj_close','Volume':'volume'})
-data['date'] = pd.to_datetime(data.date)
-data = data['close']
-input_data = stock_data[selected_stock]['scaler'].transform(np.array(data).reshape(-1,1))
 
-# Create the dataset for the model
-def create_dataset(dataset, time_step=1):
-    dataX, dataY = [], []
-    for i in range(len(dataset)-time_step-1):
-        a = dataset[i:(i+time_step), 0]
-        dataX.append(a)
-        dataY.append(dataset[i + time_step, 0])
-    return np.array(dataX), np.array(dataY)
+if st.sidebar.button("Predict"):
+  # Preprocess the data
+  data.reset_index(inplace=True)
+  data = data.rename(columns={'Date': 'date','Open':'open','High':'high','Low':'low','Close':'close',
+                              'Adj Close':'adj_close','Volume':'volume'})
+  data['date'] = pd.to_datetime(data.date)
+  data = data['close']
+  input_data = stock_data[selected_stock]['scaler'].transform(np.array(data).reshape(-1,1))
 
-# Split the data into test and train sets
-X_test, y_test = create_dataset(input_data, time_step)
-X_test = X_test.reshape(X_test.shape[0],X_test.shape[1] , 1)
+  # Create the dataset for the model
+  def create_dataset(dataset, time_step=1):
+      dataX, dataY = [], []
+      for i in range(len(dataset)-time_step-1):
+          a = dataset[i:(i+time_step), 0]
+          dataX.append(a)
+          dataY.append(dataset[i + time_step, 0])
+      return np.array(dataX), np.array(dataY)
 
-# Make predictions using the model
-y_predicted = stock_data[selected_stock]['model'].predict(X_test)
+  # Split the data into test and train sets
+  X_test, y_test = create_dataset(input_data, time_step)
+  X_test = X_test.reshape(X_test.shape[0],X_test.shape[1] , 1)
 
-# Inverse transform the predictions and original data
-y_predicted = stock_data[selected_stock]['scaler'].inverse_transform(y_predicted)
-y_test = stock_data[selected_stock]['scaler'].inverse_transform(y_test.reshape(-1,1))
+  # Make predictions using the model
+  y_predicted = stock_data[selected_stock]['model'].predict(X_test)
 
-# Plot the predictions vs the original data
-st.subheader("Predictions vs Original")
-fig2= plt.figure(figsize = (12,6))
-plt.plot(y_test, 'b', label = 'Original Price')
-plt.plot(y_predicted, 'r', label = 'Predicted Price')
-plt.xlabel('Time')
-plt.ylabel('Price')
-plt.legend()
-st.pyplot(fig2)
+  # Inverse transform the predictions and original data
+  y_predicted = stock_data[selected_stock]['scaler'].inverse_transform(y_predicted)
+  y_test = stock_data[selected_stock]['scaler'].inverse_transform(y_test.reshape(-1,1))
 
-# Display the prediction for the specified number of days
-st.subheader("Prediction for the next {} days".format(n_days))
-fig3= plt.figure(figsize = (12,6))
-plt.plot(y_predicted[-n_days:], 'r', label = 'Predicted Price')
-plt.xlabel('Time')
-plt.ylabel('Price')
-plt.legend()
-st.pyplot(fig3)
-news(selected_stock)
+  # Plot the predictions vs the original data
+  st.subheader("Predictions vs Original")
+  fig2= plt.figure(figsize = (12,6))
+  plt.plot(y_test, 'b', label = 'Original Price')
+  plt.plot(y_predicted, 'r', label = 'Predicted Price')
+  plt.xlabel('Time')
+  plt.ylabel('Price')
+  plt.legend()
+  st.pyplot(fig2)
+
+  # Display the prediction for the specified number of days
+  import plotly.express as px
+  y_predicted = y_predicted.reshape(-1)
+  times = list(range(1, n_days+1))
+  df = pd.DataFrame({'Day': times, 'Price': y_predicted[-n_days:]})
+  fig = px.line(df, x='Day', y='Price', hover_name='Price', title='Prediction for the next {} days'.format(n_days))
+  st.plotly_chart(fig)
+
+  # Display News Based on selected stock
+  news(selected_stock)
