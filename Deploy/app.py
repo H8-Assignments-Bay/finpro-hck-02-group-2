@@ -58,7 +58,7 @@ def news(selected_stock):
     headline =  link_element.get_text()
     st.markdown(f'<p class="big-font">{headline}</p>', unsafe_allow_html=True)
     st.markdown(link, unsafe_allow_html=True)
-    st.markdown("""<hr style="height:3px;border:none;color:#FAFAFA;background-color:#FAFAFA;" /> """, unsafe_allow_html=True)
+    st.markdown("""<hr style="height:3px;border:none;color:#49403C;background-color:#49403C;" /> """, unsafe_allow_html=True)
 
 # Load the models and scalers
 scaler_bca = pickle.load(open('scaler_bca.pkl','rb'))
@@ -106,6 +106,10 @@ data = yf.download(stock_data[selected_stock]['ticker'], START, TODAY)
 data = data[["Open", "High","Low", "Close","Volume"]]
 st.write(data.tail())
 
+Stock = st.sidebar.radio(
+    "Do you already have the stock?",
+    ('Yes', 'No'))
+
 
 if st.sidebar.button("Predict"):
   # Preprocess the data
@@ -149,14 +153,16 @@ if st.sidebar.button("Predict"):
   P = round(((L-F)/F),2)
   P = '{:.2f}'.format(P)
   T = '{:,.2f}'.format(L)
-
-
-  #
   st.metric(stock_data[selected_stock]['ticker'], f'IDR {T}', f'{P}%')
   st.plotly_chart(fig)
+
+  if Stock == 'Yes':
+    st.write('You selected comedy.')
+  else:
+    st.write("You didn\'t select comedy.")
 
   # Harga baru - harga lama / harga lama x 100%
 
 
   # Display News Based on selected stock
-  news(selected_stock)
+news(selected_stock)
