@@ -19,11 +19,15 @@ image2 = Image.open('mandiri.png')
 image3 = Image.open('bni.png')
 image4 = Image.open('bri.png')
 image5 = Image.open('btn.png')
+logo = Image.open('STOCK-removebg.png')
 
 st.markdown("""
 <style>
 .big-font {
     font-size:25px !important;
+}
+.me-font {
+    font-size:20px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -60,6 +64,31 @@ def news(selected_stock):
     st.markdown(link, unsafe_allow_html=True)
     st.markdown("""<hr style="height:3px;border:none;color:#49403C;background-color:#49403C;" /> """, unsafe_allow_html=True)
 
+def suggest(A, S):
+
+  S = float(S)
+  if A == 'Yes':
+    if S <= -1.0:
+      st.header('Sell :cry:') 
+      st.markdown(f'<p class="me-font">Because for the next 30 days will going down more than 1%</p>', unsafe_allow_html=True)
+    elif S >= 1.0:
+      st.header('Buy :money_mouth_face:')
+      st.markdown(f'<p class="me-font">Because for the next 30 days will going up more than 1%</p>', unsafe_allow_html=True)
+    else:
+      st.header('Hold :sunglasses:')
+      st.markdown(f'<p class="me-font">Because for the next 30 days The price do not have significant changes</p>', unsafe_allow_html=True)
+  
+  else:
+    if S <= -1.0:
+      st.header('Sell')
+      st.markdown(f'<p class="me-font">oops! The stock you choose might be going down in the next 30 days</p>', unsafe_allow_html=True)
+    elif S >= 1.0:
+      st.header('<p class="me-font">Time to buy! Estimatedly this stock will go up in the next 30 days')
+    else:
+      st.header('<p class="me-font">Make your own decision, this stock price will be stagnant for the next 30 days')
+
+
+
 # Load the models and scalers
 scaler_bca = pickle.load(open('scaler_bca.pkl','rb'))
 model_bca = tf.keras.models.load_model('model_bca.h5')
@@ -89,7 +118,7 @@ TODAY = date.today().strftime("%Y-%m-%d")
 time_step = 8
 
 # Set up the web app
-st.title('Stock Forecast App')
+st.image(logo)
 
 # Allow the user to select a stock and specify the number of days to predict
 stocks = ('BBCA', 'BMRI', 'BBNI', 'BBRI','BBTN')
@@ -140,14 +169,26 @@ if st.sidebar.button("Predict"):
   y_predicted = stock_data[selected_stock]['scaler'].inverse_transform(y_predicted)
   y_test = stock_data[selected_stock]['scaler'].inverse_transform(y_test.reshape(-1,1))
 
+  # Plot the predictions vs the original data
+  st.subheader("Predictions vs Original")
+  fig2= plt.figure(figsize = (12,6))
+  plt.plot(y_test, 'b', label = 'Original Price')
+  plt.plot(y_predicted, 'r', label = 'Predicted Price')
+  plt.xlabel('Time')
+  plt.ylabel('Price')
+  plt.legend()
+  st.pyplot(fig2)
+
   # Display the prediction for the specified number of days
   st.markdown(f'<p class="big-font">Prediction for the next {n_days} days</p>', unsafe_allow_html=True)
   y_predicted = y_predicted.reshape(-1)
   times = list(range(1, n_days+1))
   df = pd.DataFrame({'Day': times, 'Price': y_predicted[-n_days:]})
   fig = px.line(df, x='Day', y='Price', hover_name='Price')
+  fig.update_traces(line_color='#ffff00', line_width=5)
+  
 
-  #Percentage
+  #Percentage for predictions
   L = y_predicted[-1]
   F = y_predicted[-n_days]
   P = round(((L-F)/F),2)
@@ -156,13 +197,16 @@ if st.sidebar.button("Predict"):
   st.metric(stock_data[selected_stock]['ticker'], f'IDR {T}', f'{P}%')
   st.plotly_chart(fig)
 
-  if Stock == 'Yes':
-    st.write('You selected comedy.')
-  else:
-    st.write("You didn\'t select comedy.")
+  #Precentage for suggestion
+  X = y_predicted[-30]
+  X = round(((L-X)/X),2)
+  X = '{:.2f}'.format(X)
 
-  # Harga baru - harga lama / harga lama x 100%
+
+  st.markdown(f'<p class="big-font">Our Suggestion</p>', unsafe_allow_html=True)
+  suggest(Stock, X)
+
 
 
   # Display News Based on selected stock
-news(selected_stock)
+  news(selected_stock)
