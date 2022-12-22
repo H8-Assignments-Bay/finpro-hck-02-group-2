@@ -3,7 +3,7 @@
 
 
 
-<h3 align="center">Where beginers need to know</h3>
+<h3 align="center">Where beginners need to know</h3>
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
@@ -13,10 +13,20 @@ From a beginners point of view, stocks is really hard to understand because is a
 <img src="https://github.com/H8-Assignments-Bay/finpro-hck-02-group-2/blob/main/obama-pew.gif" width="250" height="250"/>
 
 
-## Objectives
+## Our Function
 
-### 1. Prediction for 7-30 days ahead
+### 1. Prediction
 
-### 2. Suggestion how to do with the stocks
+For every bank stock that you have choose, stocky will show you 5 days historical data about the stock movement and then stocky will predicted how your stock will be for maximum 30 days. StockY will give your how the stock movement will go per days and how many percent that the stock will go. The banks includes:
+- BCA
+- BRI
+- BTN
+- Mandiri
+- BNI
+
+
+### 2. Suggestion
+
+
 
 ### 3. News Headline about the stock
