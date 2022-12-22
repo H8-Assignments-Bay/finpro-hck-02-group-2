@@ -26,9 +26,6 @@ st.markdown("""
 .big-font {
     font-size:25px !important;
 }
-.me-font {
-    font-size:20px !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -70,23 +67,24 @@ def suggest(A, S):
   if A == 'Yes':
     if S <= -1.0:
       st.header('Sell :cry:') 
-      st.markdown(f'<p class="me-font">Because for the next 30 days will going down more than 1%</p>', unsafe_allow_html=True)
+      st.markdown(f'<p class="big-font">Because for the next 30 days will going down more than 1% </p>', unsafe_allow_html=True)
     elif S >= 1.0:
-      st.header('Buy :money_mouth_face:')
-      st.markdown(f'<p class="me-font">Because for the next 30 days will going up more than 1%</p>', unsafe_allow_html=True)
+      st.header('Buy More :money_mouth_face:')
+      st.markdown(f'<p class="big-font">Because for the next 30 days will going up more than 1% </p>', unsafe_allow_html=True)
     else:
       st.header('Hold :sunglasses:')
-      st.markdown(f'<p class="me-font">Because for the next 30 days The price do not have significant changes</p>', unsafe_allow_html=True)
+      st.markdown(f'<p class="big-font">Because for the next 30 days The price do not have significant changes </p>', unsafe_allow_html=True)
   
   else:
     if S <= -1.0:
-      st.header('Sell')
-      st.markdown(f'<p class="me-font">oops! The stock you choose might be going down in the next 30 days</p>', unsafe_allow_html=True)
+      st.header('Dont Buy :cry:')
+      st.markdown(f'<p class="big-font">Oops! The stock you choose might be going down in the next 30 days</p>', unsafe_allow_html=True)
     elif S >= 1.0:
-      st.header('<p class="me-font">Time to buy! Estimatedly this stock will go up in the next 30 days')
+      st.header('Buy :money_mouth_face:')
+      st.markdown(f'<p class="big-font">Time to buy! Estimatedly this stock will go up in the next 30 days</p>', unsafe_allow_html=True)
     else:
-      st.header('<p class="me-font">Make your own decision, this stock price will be stagnant for the next 30 days')
-
+      st.header('Up to you :stuck_out_tongue_winking_eye:')
+      st.markdown(f'<p class="big-font">Make your own decision, this stock price will be stagnant for the next 30 days</p>', unsafe_allow_html=True)
 
 
 # Load the models and scalers
