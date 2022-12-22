@@ -27,6 +27,12 @@ For every bank stock that you have choose, stocky will show you 5 days historica
 
 ### 2. Suggestion
 
+And after we do the prediction for your choosen bank stocks, we will give you a suggestion or recommendation for what will you do to your stocks. This recommendation was based on :
 
+- Buy, if the stocks was up 1% or more
+- Sell. if the stocks was down 1% or more
+- Hold, if the stocks was no significant movement between 1% ( x < 1%   or   x > -1%)
 
-### 3. News Headline about the stock
+### 3. News Headlines
+
+The next section we will provide you all the recent news headlines and the links for your choosen stocks.
